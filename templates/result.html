@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Estimated Flight Fare</title>
+</head>
+<body>
+    <main class="page-shell result-shell">
+        <section class="result-card" aria-labelledby="result-title">
+            <div class="result-icon" aria-hidden="true">✓</div>
+            <h1 id="result-title">Estimated flight fare</h1>
+            <p class="result-value">₹{{ "{:,.2f}".format(final_result) }}</p>
+            <p class="result-note">This estimate is based on historical fares and may differ from current airline prices.</p>
+            <a class="secondary-action" href="{{ url_for('predict_datapoint') }}">Estimate another flight</a>
+        </section>
+    </main>
+</body>
+</html>

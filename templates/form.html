@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Estimate an Indian domestic flight fare from route and journey details.">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+    <title>FareSense — Flight Fare Estimator</title>
+</head>
+<body>
+    <main class="page-shell">
+        <header class="site-header">
+            <a class="brand" href="{{ url_for('predict_datapoint') }}" aria-label="FareSense home">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16Z"/></svg>
+                </span>
+                <span>FareSense</span>
+            </a>
+        </header>
+
+        <section class="hero">
+            <h1>Flight fare estimator</h1>
+            <p class="hero-copy">Enter the details from the flight you are considering. Every field below explains what it means and exactly what you should provide.</p>
+        </section>
+
+        <div class="estimator-layout">
+            <form method="post" id="fare-form" class="prediction-panel">
+                <div class="progress-block" aria-live="polite">
+                    <div class="progress-copy">
+                        <span>Your flight details</span>
+                        <span id="progress-label">0 of 9 completed</span>
+                    </div>
+                    <div class="progress-track" aria-hidden="true">
+                        <span id="progress-bar"></span>
+                    </div>
+                </div>
+
+                <section class="form-section" aria-labelledby="route-title">
+                    <div class="section-heading">
+                        <span class="section-number">1</span>
+                        <div>
+                            <h2 id="route-title">Route and airline</h2>
+                            <p>Start with who you are flying with and where you are going.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="airline">Airline</label>
+                            <select id="airline" name="airline" required aria-describedby="airline-guide">
+                                <option value="" disabled selected>Select an airline</option>
+                                <option value="SpiceJet">SpiceJet</option>
+                                <option value="AirAsia">AirAsia</option>
+                                <option value="Vistara">Vistara</option>
+                                <option value="GO_FIRST">Go First</option>
+                                <option value="Indigo">IndiGo</option>
+                                <option value="Air_India">Air India</option>
+                            </select>
+                            <div class="field-guide" id="airline-guide">
+                                <p><strong>What it means:</strong> The airline company operating the flight.</p>
+                                <p><strong>What to enter:</strong> Select the airline name shown on your flight listing or ticket.</p>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="classs">Travel class</label>
+                            <select id="classs" name="classs" required aria-describedby="class-guide">
+                                <option value="" disabled selected>Select a travel class</option>
+                                <option value="Economy">Economy</option>
+                                <option value="Business">Business</option>
+                            </select>
+                            <div class="field-guide" id="class-guide">
+                                <p><strong>What it means:</strong> The cabin category that determines seat type and service level.</p>
+                                <p><strong>What to enter:</strong> Choose Economy or Business to match the fare you are checking.</p>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="source_city">Departure city</label>
+                            <select id="source_city" name="source_city" required aria-describedby="source-guide">
+                                <option value="" disabled selected>Select the starting city</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Kolkata">Kolkata</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Chennai">Chennai</option>
+                            </select>
+                            <div class="field-guide" id="source-guide">
+                                <p><strong>What it means:</strong> The city where your flight journey begins.</p>
+                                <p><strong>What to enter:</strong> Select the city you will depart from.</p>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="destination_city">Destination city</label>
+                            <select id="destination_city" name="destination_city" required aria-describedby="destination-guide" aria-errormessage="route-error">
+                                <option value="" disabled selected>Select the destination city</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Kolkata">Kolkata</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="Delhi">Delhi</option>
+                            </select>
+                            <div class="field-guide" id="destination-guide">
+                                <p><strong>What it means:</strong> The city where your flight journey ends.</p>
+                                <p><strong>What to enter:</strong> Select the city you are travelling to. It must differ from departure city.</p>
+                            </div>
+                            <p class="field-error" id="route-error" role="alert"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section" aria-labelledby="schedule-title">
+                    <div class="section-heading">
+                        <span class="section-number">2</span>
+                        <div>
+                            <h2 id="schedule-title">Flight schedule</h2>
+                            <p>Use the scheduled local departure and arrival times.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="departure_time">Departure time period</label>
+                            <select id="departure_time" name="departure_time" required aria-describedby="departure-guide">
+                                <option value="" disabled selected>Select a time period</option>
+                                <option value="Early_Morning">Early morning</option>
+                                <option value="Morning">Morning</option>
+                                <option value="Afternoon">Afternoon</option>
+                                <option value="Evening">Evening</option>
+                                <option value="Night">Night</option>
+                                <option value="Late_Night">Late night</option>
+                            </select>
+                            <div class="field-guide" id="departure-guide">
+                                <p><strong>What it means:</strong> The part of the day when the flight is scheduled to leave.</p>
+                                <p><strong>What to enter:</strong> Pick the label closest to the departure time printed on the flight listing.</p>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="arrival_time">Arrival time period</label>
+                            <select id="arrival_time" name="arrival_time" required aria-describedby="arrival-guide">
+                                <option value="" disabled selected>Select a time period</option>
+                                <option value="Early_Morning">Early morning</option>
+                                <option value="Morning">Morning</option>
+                                <option value="Afternoon">Afternoon</option>
+                                <option value="Evening">Evening</option>
+                                <option value="Night">Night</option>
+                                <option value="Late_Night">Late night</option>
+                            </select>
+                            <div class="field-guide" id="arrival-guide">
+                                <p><strong>What it means:</strong> The part of the day when the flight is scheduled to reach its destination.</p>
+                                <p><strong>What to enter:</strong> Pick the label closest to the arrival time shown on the listing.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section" aria-labelledby="journey-title">
+                    <div class="section-heading">
+                        <span class="section-number">3</span>
+                        <div>
+                            <h2 id="journey-title">Journey details</h2>
+                            <p>Describe the full trip and how far ahead you are checking.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="stops">Stops</label>
+                            <select id="stops" name="stops" required aria-describedby="stops-guide">
+                                <option value="" disabled selected>Select scheduled stops</option>
+                                <option value="zero">Non-stop</option>
+                                <option value="one">1 stop</option>
+                                <option value="two_or_more">2 or more stops</option>
+                            </select>
+                            <div class="field-guide" id="stops-guide">
+                                <p><strong>What it means:</strong> How many airport layovers happen before the final destination.</p>
+                                <p><strong>What to enter:</strong> Choose Non-stop for a direct flight, otherwise count the layover airports.</p>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label for="duration">Total journey duration</label>
+                            <div class="input-with-unit">
+                                <input id="duration" type="number" name="duration" min="0.83" max="49.83" step="0.01" inputmode="decimal" placeholder="e.g. 2.50" required aria-describedby="duration-guide duration-feedback">
+                                <span class="unit">hours</span>
+                            </div>
+                            <p class="live-feedback" id="duration-feedback" aria-live="polite">Enter a duration to see hours and minutes.</p>
+                            <div class="field-guide" id="duration-guide">
+                                <p><strong>What it means:</strong> The total elapsed time from take-off at the departure city to landing at the destination, including layover waiting time.</p>
+                                <p><strong>What to enter:</strong> Enter decimal hours from the listing. Example: 2 hours 30 minutes = <strong>2.5</strong>.</p>
+                            </div>
+                        </div>
+
+                        <div class="field field-wide">
+                            <label for="days_left">Days left until departure</label>
+                            <input id="days_left" type="number" name="days_left" min="1" max="49" step="1" inputmode="numeric" placeholder="e.g. 14" required aria-describedby="days-guide days-feedback">
+                            <p class="live-feedback" id="days-feedback" aria-live="polite">The training data supports flights departing 1–49 days from now.</p>
+                            <div class="field-guide" id="days-guide">
+                                <p><strong>What it means:</strong> The number of calendar days between the booking or search date and the flight's departure date.</p>
+                                <p><strong>What to enter:</strong> If the flight leaves tomorrow, enter <strong>1</strong>. If it leaves two weeks from now, enter <strong>14</strong>.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="submit-area">
+                    <button type="submit" id="submit-button" class="primary-action">
+                        <span>Estimate my fare</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                    <p class="form-note">Based on historical data—not a live airline quote.</p>
+                </div>
+            </form>
+
+            <aside class="trip-summary" id="trip-summary" aria-labelledby="summary-title">
+                <div class="summary-header">
+                    <span class="summary-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16Z"/></svg>
+                    </span>
+                    <div>
+                        <p class="summary-kicker">Live summary</p>
+                        <h2 id="summary-title">Your trip</h2>
+                    </div>
+                </div>
+
+                <div class="summary-route">
+                    <div class="route-city">
+                        <span>From</span>
+                        <strong id="summary-source">—</strong>
+                    </div>
+                    <div class="route-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                    </div>
+                    <div class="route-city">
+                        <span>To</span>
+                        <strong id="summary-destination">—</strong>
+                    </div>
+                </div>
+
+                <dl class="summary-list">
+                    <div class="summary-row"><dt>Airline</dt><dd id="summary-airline">Not selected</dd></div>
+                    <div class="summary-row"><dt>Class</dt><dd id="summary-class">Not selected</dd></div>
+                    <div class="summary-row"><dt>Schedule</dt><dd id="summary-schedule">Not selected</dd></div>
+                    <div class="summary-row"><dt>Stops</dt><dd id="summary-stops">Not selected</dd></div>
+                    <div class="summary-row"><dt>Duration</dt><dd id="summary-duration">Not entered</dd></div>
+                    <div class="summary-row"><dt>Departure in</dt><dd id="summary-days">Not entered</dd></div>
+                </dl>
+
+                <div class="summary-tip">
+                    <strong>Why these details?</strong>
+                    <p>Airline, cabin, route, timing and booking lead time all showed useful price patterns in the training data.</p>
+                </div>
+            </aside>
+        </div>
+    </main>
+</body>
+</html>

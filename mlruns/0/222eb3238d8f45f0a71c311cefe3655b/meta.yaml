@@ -1,0 +1,15 @@
+artifact_uri: ./mlruns/0/222eb3238d8f45f0a71c311cefe3655b/artifacts
+end_time: 1788684211905
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 222eb3238d8f45f0a71c311cefe3655b
+run_name: dashing-jay-382
+run_uuid: 222eb3238d8f45f0a71c311cefe3655b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1788684197340
+status: 4
+tags: []
+user_id: waqas

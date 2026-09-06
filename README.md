@@ -1,110 +1,225 @@
-# Flight Fare Prediction
+# FareSense
 
-## About The Project
+FareSense is a beginner-friendly machine-learning web application that estimates the fare of an Indian domestic flight from its airline, route, schedule, cabin class, journey duration, stops, and booking lead time.
 
-Welcome to the Flight Fare Prediction App! This project aims to provide users with a tool to predict flight fares based on various parameters, allowing them to make informed decisions when booking air travel. The app utilizes machine learning algorithms trained on historical flight data to estimate future fares. Users can input details such as departure and arrival locations, date, and airline preferences to receive an estimated fare for their desired flight. Whether you're a frequent traveller or planning your next vacation, this app is designed to make the flight booking process more transparent and efficient. Feel free to explore, contribute, and enhance the functionality of this Flight Fare Prediction App!
+The interface uses a minimal black-and-green terminal theme and explains every input. The prediction is an educational estimate based on historical data, not a live airline quotation.
 
-## Built With
+## What this project demonstrates
 
- - Pandas
- - Numpy
- - Scikit-learn
- - Seaborn
- - Matplotlib
- - Flask
- - DVC
- - MLFlow
+- Supervised machine-learning regression
+- Data ingestion and train/test splitting
+- Numerical and categorical preprocessing
+- Training and comparison of regression models
+- Experiment tracking with MLflow
+- Dataset and pipeline tracking with DVC
+- Saving and loading trained Python objects
+- Serving predictions through Flask
+- A responsive HTML, CSS, and JavaScript interface
 
-## Getting Started
+## Machine-learning approach
 
-This will help you understand how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+This is a **supervised regression** project:
 
-## Installation Steps
+- **Supervised** means the training examples contain flight details and their known historical prices.
+- **Regression** means the output is a continuous number, such as ₹8,750, rather than a category.
 
-### Option 1: Installation from GitHub
+The training pipeline compares Linear Regression, Ridge, Lasso, Elastic Net, Decision Tree, and Random Forest. The model with the highest test R² score is saved.
 
-Follow these steps to install and set up the project directly from the GitHub repository:
+The current saved model is a **Random Forest Regressor with 100 decision trees**. Random Forest is useful because fare relationships are nonlinear: the effect of duration or booking lead time can depend on the route, airline, cabin class, and number of stops.
 
-1. **Clone the Repository**
-   - Open your terminal or command prompt.
-   - Navigate to the directory where you want to install the project.
-   - Run the following command to clone the GitHub repository:
-     ```
-     git clone <your-repository-url>
-     ```
+## Model inputs
 
-2. **Create a Virtual Environment** (Optional but recommended)
-   - It's a good practice to create a virtual environment to manage project dependencies. Run the following command:
-     ```
-     conda create -p <Environment_Name> python==<python version> -y
-     ```
+| Field | Meaning |
+| --- | --- |
+| airline | Airline operating the flight |
+| source_city | City where the journey begins |
+| destination_city | City where the journey ends |
+| departure_time | General time period when the flight departs |
+| arrival_time | General time period when the flight arrives |
+| stops | Non-stop, one stop, or two or more stops |
+| classs | Economy or Business cabin |
+| duration | Total journey duration in decimal hours, including layovers |
+| days_left | Calendar days between checking the fare and departure |
 
-3. **Activate the Virtual Environment** (Optional)
-   - Activate the virtual environment based on your operating system:
-       ```
-       conda activate <Environment_Name>/
-       ```
+The value being predicted is **price**, measured in Indian rupees.
 
-4. **Install Dependencies**
-   - Navigate to the project directory:
-     ```
-     cd [project_directory]
-     ```
-   - Run the following command to install project dependencies:
-     ```
-     pip install -r requirements.txt
-     ```
+## Dataset
 
-5. **Run the Project**
-   - Start the project by running the appropriate command.
-     ```
-     python app.py
-     ```
+The local dataset contains 300,153 historical flight listings with these columns:
 
-6. **Access the Project**
-   - Open a web browser or the appropriate client to access the project.
-  
-<br><br>
-### Option 2: Installation from DockerHub
+    airline, source_city, departure_time, stops, arrival_time,
+    destination_city, classs, duration, days_left, price
 
-If you prefer to use Docker, you can install and run the project using a Docker container from DockerHub:
+It covers:
 
-1. **Pull the Docker Image**
-   - Open your terminal or command prompt.
-   - Run the following command to pull the Docker image from DockerHub:
-     ```
-     docker pull <your-dockerhub-username>/flight-app
-     ```
+- Six airlines
+- Delhi, Mumbai, Bangalore, Kolkata, Hyderabad, and Chennai
+- Economy and Business class
+- Journey durations from 0.83 to 49.83 hours
+- Booking lead times from 1 to 49 days
+- Recorded prices from ₹1,105 to ₹123,071
 
-2. **Run the Docker Container**
-   - Start the Docker container by running the following command, and mapping any necessary ports:
-     ```
-     docker run -p 5000:5000 <your-dockerhub-username>/flight-app
-     ```
+The pipeline creates an 80/20 random split:
 
-3. **Access the Project**
-   - Open a web browser or the appropriate client to access the project.
+- 240,122 training rows
+- 60,031 testing rows
 
+### Dataset limitation
 
-## Contributing
+The dataset does not contain collection dates, and its original source, license, and collection period are not documented. It is suitable for learning and portfolio demonstration, but its output should not be treated as a reliable estimate of current airfare.
 
-Contributions are what makes the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+## Preprocessing
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+Scikit-learn pipelines prepare the form data:
 
-1. Fork the Project
-2. Create your Feature Branch
-3. Commit your Changes
-4. Push to the Branch
-5. Open a Pull Request
+- **SimpleImputer** fills missing numerical values with the median and categorical values with the most frequent value.
+- **OrdinalEncoder** converts airline, city, schedule, stops, and class labels into numbers.
+- **MinMaxScaler** scales features into comparable numerical ranges.
+- **ColumnTransformer** applies the appropriate operations to numerical and categorical columns.
+
+The fitted preprocessing pipeline is saved as **Artifacts/Preprocessor.pkl**.
+
+## Evaluation
+
+The latest local MLflow evaluation recorded approximately:
+
+| Metric | Result |
+| --- | ---: |
+| R² | 0.9849 |
+| MAE | ₹1,084.85 |
+| RMSE | ₹2,792.41 |
+
+These results measure performance on a random test sample from the same historical dataset. They do not measure performance on current or future fares.
+
+## Application flow
+
+    Web form
+        ↓
+    Flask receives nine input values
+        ↓
+    Preprocessor.pkl transforms the values
+        ↓
+    Model.pkl predicts the fare
+        ↓
+    Flask renders the estimated price
+
+## Project structure
+
+    FareSense/
+    ├── app.py                              # Flask application
+    ├── templates/                          # Form and result pages
+    ├── static/                             # Terminal theme and browser interactions
+    ├── src/FlightPricePrediction/
+    │   ├── components/
+    │   │   ├── Data_ingestion.py
+    │   │   ├── Data_transformation.py
+    │   │   ├── Model_trainer.py
+    │   │   └── Model_evaluation.py
+    │   └── pipeline/
+    │       ├── Training_pipeline.py
+    │       └── Prediction_pipeline.py
+    ├── Notebook_Experiments/               # Exploration and training notebooks
+    ├── Artifacts/                           # Local data/model outputs
+    ├── mlruns/                              # MLflow experiment metadata
+    ├── dvc.yaml                             # DVC training stages
+    ├── requirements.txt
+    └── PROJECT_GUIDE.md                     # Detailed beginner explanation
+
+For a deeper walkthrough, read [PROJECT_GUIDE.md](PROJECT_GUIDE.md).
+
+## Important artifact notice
+
+The trained model, fitted preprocessor, and full CSV files are excluded from Git because they are generated or too large for standard GitHub storage.
+
+The web application requires:
+
+    Artifacts/Model.pkl
+    Artifacts/Preprocessor.pkl
+
+Training additionally requires:
+
+    Notebook_Experiments/Data/data.csv
+
+The repository includes a DVC pointer for the dataset, but no DVC remote storage is configured. Therefore, **dvc pull cannot restore the data on a fresh clone** until a remote is added.
+
+## Local setup
+
+### 1. Clone the repository
+
+    git clone https://github.com/WaqassKhn/FareSense.git
+    cd FareSense
+
+### 2. Create and activate a virtual environment
+
+Windows PowerShell:
+
+    py -3.12 -m venv venv
+    .\venv\Scripts\Activate.ps1
+
+macOS or Linux:
+
+    python3 -m venv venv
+    source venv/bin/activate
+
+### 3. Install dependencies
+
+    python -m pip install --upgrade pip setuptools wheel
+    python -m pip install -r requirements.txt
+
+### 4. Add or generate the model artifacts
+
+Place the trained model files under **Artifacts/**, or place **data.csv** under **Notebook_Experiments/Data/** and run:
+
+    python src/FlightPricePrediction/pipeline/Training_pipeline.py
+
+Training the Random Forest can take significant time and memory.
+
+### 5. Start the Flask application
+
+    python app.py
+
+Open:
+
+    http://127.0.0.1:8080
+
+If port 8080 is occupied, stop the older Flask process before starting the application again.
+
+## Docker
+
+After the model artifacts are available locally:
+
+    docker build -t faresense .
+    docker run --rm -p 8080:8080 faresense
+
+Then open **http://127.0.0.1:8080**.
+
+## Technology stack
+
+| Technology | Purpose |
+| --- | --- |
+| Python | Main programming language |
+| Pandas | Tabular data loading and manipulation |
+| NumPy | Numerical arrays |
+| Scikit-learn | Preprocessing, training, and evaluation |
+| Flask | Web server and prediction endpoint |
+| HTML/CSS/JavaScript | User interface |
+| MLflow | Experiment and metric tracking |
+| DVC | Dataset and pipeline tracking |
+| Pickle | Saving and loading the model and preprocessor |
+| GitHub | Source-code version control |
+
+## Recommended improvements
+
+- Collect recent, licensed airfare data with observation and departure dates.
+- Replace the random split with a chronological train/validation/test split.
+- Add exact time, weekday, season, holiday, airport, and flight-number features.
+- Compare Random Forest with XGBoost, LightGBM, and CatBoost.
+- Replace arbitrary ordinal category relationships with a more suitable encoding strategy.
+- Add automated tests and a non-empty CI workflow.
+- Store model and dataset artifacts in configured DVC remote storage.
+- Disable Flask debug mode for production deployment.
+- Monitor prediction errors and data drift after deployment.
 
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-
-## Acknowledgements
-
-We'd like to extend our gratitude to all individuals and organizations who have played a role in the development and success of this project. Your support, whether through contributions, inspiration, or encouragement, has been invaluable. Thank you for being a part of our journey.
+See [LICENSE](LICENSE).

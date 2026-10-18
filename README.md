@@ -5,7 +5,7 @@ FareSense is a beginner-friendly machine-learning web application that estimates
 The interface uses a minimal black-and-green terminal theme and explains every input. The prediction is an educational estimate based on historical data, not a live airline quotation.
 
 This serves no purpose and only exists because i wanted to learn stuff
-## What this project demonstrates
+## What this project demonstrates:
 
 - Supervised machine-learning regression
 - Data ingestion and train/test splitting
